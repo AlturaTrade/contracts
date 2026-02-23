@@ -40,6 +40,7 @@ contract WithdrawalWrapper is AccessControl, ReentrancyGuard {
     error ZeroAmount();
     error BadAddress();
     error NotFound();
+    error InvalidID();
     error BadStatus();
     error CancelSharesMismatch();
 
@@ -77,9 +78,10 @@ contract WithdrawalWrapper is AccessControl, ReentrancyGuard {
         emit Queued(id, receiver, sharesAmount);
     }
 
-    function claim(uint256 id) external onlyRole(RELAYER_ROLE) nonReentrant {
+    function claim(uint256 id, address expectedReceiver) external onlyRole(RELAYER_ROLE) nonReentrant {
         Request storage r = requests[id];
         if (r.receiver == address(0)) revert NotFound();
+        if (r.receiver != expectedReceiver) revert InvalidID();
         if (r.status != Status.QUEUED) revert BadStatus();
 
         uint256 beforeBal = asset.balanceOf(address(this));
@@ -95,9 +97,10 @@ contract WithdrawalWrapper is AccessControl, ReentrancyGuard {
         emit Claimed(id, r.receiver, gained);
     }
 
-    function cancel(uint256 id) external onlyRole(RELAYER_ROLE) nonReentrant {
+    function cancel(uint256 id, address expectedReceiver) external onlyRole(RELAYER_ROLE) nonReentrant {
         Request storage r = requests[id];
         if (r.receiver == address(0)) revert NotFound();
+        if (r.receiver != expectedReceiver) revert InvalidID();
         if (r.status != Status.QUEUED) revert BadStatus();
 
         uint256 beforeShares = shares.balanceOf(address(this));
