@@ -64,7 +64,6 @@ contract WithdrawalWrapper is AccessControl, ReentrancyGuard {
 
         shares.safeTransferFrom(msg.sender, address(this), sharesAmount);
 
-        shares.forceApprove(address(vault), 0);
         shares.forceApprove(address(vault), sharesAmount);
 
         id = vault.queueWithdrawal(sharesAmount, address(this));
